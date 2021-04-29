@@ -33,5 +33,5 @@ type Country struct {
 	Name           string         `json:"name"`
 	TimeZone       string         `json:"time_zone"`
 	GeoInformation GeoInformation `json:"geo_information"`
-	States         []State        `json:"state"`
+	States         []State        `json:"states"`
 }
