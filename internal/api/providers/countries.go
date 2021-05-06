@@ -4,32 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"unit-integration-and-functional-testing-in-golang/src/api/domains"
-	"unit-integration-and-functional-testing-in-golang/src/api/utils/errors"
-
-	"github.com/go-resty/resty/v2"
+	"unit-integration-and-functional-testing-in-golang/internal/api/domains"
+	"unit-integration-and-functional-testing-in-golang/internal/api/utils/errors"
+	"unit-integration-and-functional-testing-in-golang/internal/clients"
 )
 
 const (
-	getCountryUrl = "https://api.mercadolibre.com/countries/%s"
+	GetCountryUrl = "https://api.mercadolibre.com/countries/%s"
 )
 
-var restyClient *resty.Client
-
-func getClient() *resty.Client {
-	if restyClient == nil {
-		restyClient = resty.New()
-	}
-	return restyClient
-}
-
 func GetCountry(countryId string) (*domains.Country, *errors.APIError) {
-	client := getClient()
+	client := clients.GetHTTPClient()
 
 	resp, err := client.R().
 		EnableTrace().
 		SetHeader("Accept", "application/json").
-		Get(fmt.Sprintf(getCountryUrl, countryId))
+		Get(fmt.Sprintf(GetCountryUrl, countryId))
 	if err != nil {
 		return nil, &errors.APIError{
 			Status:  http.StatusInternalServerError,

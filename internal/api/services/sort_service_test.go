@@ -2,7 +2,7 @@ package services
 
 import (
 	"testing"
-	"unit-integration-and-functional-testing-in-golang/src/api/utils/sort"
+	"unit-integration-and-functional-testing-in-golang/internal/api/utils/sort"
 
 	"github.com/stretchr/testify/assert"
 )
