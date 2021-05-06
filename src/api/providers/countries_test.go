@@ -1,15 +1,30 @@
 package providers
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMain(m *testing.M) {
+	httpClient := getClient()
+	httpmock.ActivateNonDefault(httpClient.GetClient())
+
+	os.Exit(m.Run())
+}
+
 func TestGetCountry(t *testing.T) {
 	// Init
+	countryId := "AR"
+
+	httpmock.Reset()
+	responder := httpmock.NewStringResponder(200, `{"id":"AR","name":"Argentina","locale":"es_AR","currency_id":"ARS","decimal_separator":",","thousands_separator":".","time_zone":"GMT-03:00","geo_information":{"location":{"latitude":-38.416096,"longitude":-63.616673}},"states":[{"id":"AR-B","name":"Buenos Aires"},{"id":"AR-C","name":"Capital Federal"},{"id":"AR-K","name":"Catamarca"},{"id":"AR-H","name":"Chaco"},{"id":"AR-U","name":"Chubut"},{"id":"AR-W","name":"Corrientes"},{"id":"AR-X","name":"Córdoba"},{"id":"AR-E","name":"Entre Ríos"},{"id":"AR-P","name":"Formosa"},{"id":"AR-Y","name":"Jujuy"},{"id":"AR-L","name":"La Pampa"},{"id":"AR-F","name":"La Rioja"},{"id":"AR-M","name":"Mendoza"},{"id":"AR-N","name":"Misiones"},{"id":"AR-Q","name":"Neuquén"},{"id":"AR-R","name":"Río Negro"},{"id":"AR-A","name":"Salta"},{"id":"AR-J","name":"San Juan"},{"id":"AR-D","name":"San Luis"},{"id":"AR-Z","name":"Santa Cruz"},{"id":"AR-S","name":"Santa Fe"},{"id":"AR-G","name":"Santiago del Estero"},{"id":"AR-V","name":"Tierra del Fuego"},{"id":"AR-T","name":"Tucumán"}]}`)
+	httpmock.RegisterResponder("GET", fmt.Sprintf(getCountryUrl, countryId), responder)
 
 	// Test
 	country, err := GetCountry("AR")
@@ -25,13 +40,14 @@ func TestGetCountry(t *testing.T) {
 
 func TestGetCountryClientError(t *testing.T) {
 	// Init
-	httpClient := getClient()
-	httpmock.ActivateNonDefault(httpClient.GetClient())
-	responder := httpmock.NewStringResponder(0, "")
-	httpmock.RegisterResponder("GET", getCountryUrl+"/AR", responder)
+	countryId := "AR"
+
+	httpmock.Reset()
+	responder := httpmock.NewErrorResponder(errors.New("Client Error"))
+	httpmock.RegisterResponder("GET", fmt.Sprintf(getCountryUrl, countryId), responder)
 
 	// Test
-	country, err := GetCountry("AR")
+	country, err := GetCountry(countryId)
 
 	// Validation
 	assert.Nil(t, country)
@@ -42,13 +58,14 @@ func TestGetCountryClientError(t *testing.T) {
 
 func TestGetCountryNotFound(t *testing.T) {
 	// Init
-	httpClient := getClient()
-	httpmock.ActivateNonDefault(httpClient.GetClient())
-	responder := httpmock.NewStringResponder(0, `{"message": "Country not found", "error": "not_found", "status": 404, "cause": []}`)
-	httpmock.RegisterResponder("GET", getCountryUrl+"/ARS", responder)
+	countryId := "ARS"
+
+	httpmock.Reset()
+	responder := httpmock.NewStringResponder(404, `{"message": "Country not found", "error": "not_found", "status": 404, "cause": []}`)
+	httpmock.RegisterResponder("GET", fmt.Sprintf(getCountryUrl, countryId), responder)
 
 	// Test
-	country, err := GetCountry("ARS")
+	country, err := GetCountry(countryId)
 
 	// Validation
 	assert.Nil(t, country)
@@ -57,32 +74,34 @@ func TestGetCountryNotFound(t *testing.T) {
 	assert.EqualValues(t, "Country not found", err.Message)
 }
 
-func TestGetCountryInvalidErrorInterface(t *testing.T) {
+func TestGetCountryInvalidErrorResponse(t *testing.T) {
 	// Init
-	httpClient := getClient()
-	httpmock.ActivateNonDefault(httpClient.GetClient())
-	responder := httpmock.NewStringResponder(0, `{"message": "invalid client error when getting country AR", "error": "", "status": "404", "cause": []}`)
-	httpmock.RegisterResponder("GET", getCountryUrl+"/AR", responder)
+	countryId := "AR"
+
+	httpmock.Reset()
+	responder, _ := httpmock.NewJsonResponder(500, 1)
+	httpmock.RegisterResponder("GET", fmt.Sprintf(getCountryUrl, countryId), responder)
 
 	// Test
-	country, err := GetCountry("AR")
+	country, err := GetCountry(countryId)
 
 	// Validation
 	assert.Nil(t, country)
 	assert.NotNil(t, err)
 	assert.EqualValues(t, http.StatusInternalServerError, err.Status)
-	assert.EqualValues(t, "invalid client error when getting country AR", err.Message)
+	assert.EqualValues(t, "invalid error response when getting country AR", err.Message)
 }
 
 func TestGetCountryInvalidJSONResponse(t *testing.T) {
 	// Init
-	httpClient := getClient()
-	httpmock.ActivateNonDefault(httpClient.GetClient())
+	countryId := "AR"
+
+	httpmock.Reset()
 	responder := httpmock.NewStringResponder(200, `{"id": 123, "name": "Argentina", "time_zone": "GMT-03:00"}`)
-	httpmock.RegisterResponder("GET", getCountryUrl+"/AR", responder)
+	httpmock.RegisterResponder("GET", fmt.Sprintf(getCountryUrl, countryId), responder)
 
 	// Test
-	country, err := GetCountry("AR")
+	country, err := GetCountry(countryId)
 
 	// Validation
 	assert.Nil(t, country)

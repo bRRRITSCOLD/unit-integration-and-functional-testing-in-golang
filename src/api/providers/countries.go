@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	getCountryUrl = "https://api.mercadolibre.com/countries"
+	getCountryUrl = "https://api.mercadolibre.com/countries/%s"
 )
 
 var restyClient *resty.Client
@@ -29,7 +29,7 @@ func GetCountry(countryId string) (*domains.Country, *errors.APIError) {
 	resp, err := client.R().
 		EnableTrace().
 		SetHeader("Accept", "application/json").
-		Get(getCountryUrl + "/" + countryId)
+		Get(fmt.Sprintf(getCountryUrl, countryId))
 	if err != nil {
 		return nil, &errors.APIError{
 			Status:  http.StatusInternalServerError,
