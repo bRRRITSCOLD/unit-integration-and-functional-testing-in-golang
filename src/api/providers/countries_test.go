@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,6 +25,10 @@ func TestGetCountry(t *testing.T) {
 
 func TestGetCountryClientError(t *testing.T) {
 	// Init
+	httpClient := getClient()
+	httpmock.ActivateNonDefault(httpClient.GetClient())
+	responder := httpmock.NewStringResponder(0, "")
+	httpmock.RegisterResponder("GET", getCountryUrl+"/AR", responder)
 
 	// Test
 	country, err := GetCountry("AR")
@@ -37,6 +42,10 @@ func TestGetCountryClientError(t *testing.T) {
 
 func TestGetCountryNotFound(t *testing.T) {
 	// Init
+	httpClient := getClient()
+	httpmock.ActivateNonDefault(httpClient.GetClient())
+	responder := httpmock.NewStringResponder(0, `{"message": "Country not found", "error": "not_found", "status": 404, "cause": []}`)
+	httpmock.RegisterResponder("GET", getCountryUrl+"/ARS", responder)
 
 	// Test
 	country, err := GetCountry("ARS")
@@ -50,6 +59,10 @@ func TestGetCountryNotFound(t *testing.T) {
 
 func TestGetCountryInvalidErrorInterface(t *testing.T) {
 	// Init
+	httpClient := getClient()
+	httpmock.ActivateNonDefault(httpClient.GetClient())
+	responder := httpmock.NewStringResponder(0, `{"message": "invalid client error when getting country AR", "error": "", "status": "404", "cause": []}`)
+	httpmock.RegisterResponder("GET", getCountryUrl+"/AR", responder)
 
 	// Test
 	country, err := GetCountry("AR")
@@ -58,18 +71,22 @@ func TestGetCountryInvalidErrorInterface(t *testing.T) {
 	assert.Nil(t, country)
 	assert.NotNil(t, err)
 	assert.EqualValues(t, http.StatusInternalServerError, err.Status)
-	assert.EqualValues(t, "invalid error interface when getting country AR", err.Message)
+	assert.EqualValues(t, "invalid client error when getting country AR", err.Message)
 }
 
 func TestGetCountryInvalidJSONResponse(t *testing.T) {
 	// Init
+	httpClient := getClient()
+	httpmock.ActivateNonDefault(httpClient.GetClient())
+	responder := httpmock.NewStringResponder(200, `{"id": 123, "name": "Argentina", "time_zone": "GMT-03:00"}`)
+	httpmock.RegisterResponder("GET", getCountryUrl+"/AR", responder)
 
 	// Test
-	country, err := GetCountry("")
+	country, err := GetCountry("AR")
 
 	// Validation
 	assert.Nil(t, country)
 	assert.NotNil(t, err)
 	assert.EqualValues(t, http.StatusInternalServerError, err.Status)
-	assert.EqualValues(t, "error when trying to unmarshal country data for", err.Message)
+	assert.EqualValues(t, "error when trying to unmarshal country data for AR", err.Message)
 }
