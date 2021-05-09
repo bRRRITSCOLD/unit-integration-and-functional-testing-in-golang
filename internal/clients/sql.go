@@ -7,30 +7,31 @@ import (
 
 type row struct{}
 
-type sqlClient struct {
+type SQLClient struct {
 	db *sql.DB
 }
 
-type sqlClientInterface interface {
+type SQLClientInterface interface {
 	Query(query string, args ...interface{}) (*row, error)
 }
 
-func Open(driverName, dataSourceName string) (sqlClientInterface, error) {
+func Open(driverName, dataSourceName string) (SQLClientInterface, error) {
 	if driverName == "" {
 		return nil, errors.New("invalid driver name")
 	}
 
+	// db, err := SQLClientInterface.Open(driverName, dataSourceName)
 	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return nil, err
 	}
 
-	client := sqlClient{
+	client := SQLClient{
 		db: db,
 	}
 	return client, nil
 }
 
-func (sC sqlClient) Query(query string, args ...interface{}) (*row, error) {
-
+func (sC SQLClient) Query(query string, args ...interface{}) (*row, error) {
+	return nil, nil
 }

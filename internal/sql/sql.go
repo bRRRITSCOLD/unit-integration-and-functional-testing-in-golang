@@ -1,9 +1,9 @@
-package sql
+package sequel
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
+	"unit-integration-and-functional-testing-in-golang/internal/clients"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	dbClient *sql.DB
+	dbClient *clients.SQLClientInterface
 )
 
 type User struct {
@@ -23,7 +23,8 @@ type User struct {
 
 func init() {
 	var err error
-	dbClient, err = sql.Open("mysql", "this is the connection string")
+
+	dbClient, err = clients.SQLClientInterface.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", "test_user", "123abc", "127.0.0.1:3306", "test"))
 	if err != nil {
 		panic(err)
 	}
